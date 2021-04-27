@@ -1,0 +1,227 @@
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
+#include <math.h>
+using namespace std;
+char *KeyWord[12] = {"void", "int", "float", "char", "if", "else","while","do","for","return","main"};
+int num[12]={3,4,5,6,7,8,9,10,11,12,13};
+char Symbols[16]={'+','-','*','/','%','<','>','=','(',')','[',']','{','}',';',','};
+int SymbolsNum[16]={14,15,16,17,18,19,21,27,28,29,30,31,32,33,34,35};
+int error[7]={0,0,0,0,0,0,0};
+int errornum=0;
+int InputCode(char *Str)
+{
+	int StrLen=1;
+	//Str[0]='\0';
+	char temp='\n';
+	//scanf("%c",Str);
+	while (temp!='#')
+	{
+		scanf("%c",&temp);
+		Str[StrLen++]=temp;
+	}
+	scanf("%c",Str);
+	return StrLen;
+}
+void Treatment(char *Str,int begin,int end) //空格
+{
+	int i=begin;
+	if(begin==end)
+	{
+		Str[begin]=' ';
+	}
+	for(i=begin;i<end;i++)
+	{
+        if(Str[i]!=' ')
+		{
+			break;
+		}
+	}
+	if(i==end)
+	{
+		Str[end]=' ';
+	}
+}
+
+void PreTreatment(char *Str,int Len)
+{
+	int begin=0;
+	for(int i=0;i<Len-1;i++)
+	{
+		if(Str[i]=='/'&&Str[i+1]=='/')//让‘//’后面的东西都变成空格
+		{
+			for(int j=i;Str[j]!='\n';j++)
+			{
+				Str[j]=' ';
+				i=j+1;
+			}
+			Str[i]=' ';
+		}
+		if(Str[i]=='/'&&Str[i+1]=='*')//让/* */中间的东西变成空格
+		{
+			for(int j=i;j<Len-1;j++)
+			{
+				if(Str[j]=='*'&&Str[j+1]=='/')
+				{
+					for(int k=i;k<=j+1;k++)
+				   {
+						Str[k]=' ';
+				   }
+				}
+			}
+		}
+	}
+	for(int i=0;i<Len;i++)
+	{
+		if(Str[i]=='\n'||Str[i]=='#')
+		{
+			Treatment(Str,begin,i);
+			begin=i+1;
+		}
+	}
+}
+
+int CheckKeyWord(char *Str,char *Word[],int *num)
+{
+	for(int i=0;i<11;i++)
+	{
+		if(strcmp(Str,Word[i])==0)//和word中的第i个相等
+		{
+			return *(num+i);//num[i]
+		}
+	}
+	return -1;
+}
+
+int CheckSyboml(char ch,char *str,int *num)
+{
+	for(int i=0;i<16;i++)
+	{
+		if(*(str+i)==ch)//这两个指针里的东西相等
+		{
+			return *(num+i);
+		}
+	}
+}
+
+void Analyzer(char *Str,int begin,int end,int line)
+{
+	for(int i=begin;i<end;)
+	{
+		if(Str[i]==' ')
+		{
+			i++;
+			continue;
+		}
+		char *temp;
+		temp=new char[19];
+		if((Str[i]>=65&&Str[i]<=90)||(Str[i]>=97&&Str[i]<=122))//大写字母或者是小写字母
+		{
+			int len=0;
+			for(int j=i;(Str[j]>=48&&Str[j]<=57)||(Str[j]>=65&&Str[j]<=90)||(Str[j]>=97&&Str[j]<=122);j++,i++)//数字或者是标识符
+			{
+				temp[len++]=Str[j];
+			}
+			temp[len]='\0';//空格是字符串结束的标志
+			int index=CheckKeyWord(temp,KeyWord,num);			if(index==-1)//不在3-13范围内
+			{
+				cout<<"<"<<"1,"<<temp<<">,";
+			}
+			else
+			{
+				cout<<"<"<<index<<",->,";
+			}
+
+		}
+		else if(Str[i]>=48&&Str[i]<=57)//在数字范围内
+		{
+			int len=0,index=1;
+			for(int j=i;(Str[j]>=48&&Str[j]<=57)||(Str[j]>=65&&Str[j]<=90)||(Str[j]>=97&&Str[j]<=122);j++,i++)
+			{
+				if((Str[j]>=65&&Str[j]<=90)||(Str[j]>=97&&Str[j]<=122))//如果数字后面还有字母
+				{
+					index=-1;
+				}
+				temp[len++]=Str[j];
+			}
+			temp[len]='\0';
+			if(index<0)
+			{
+				error[errornum++]=line;
+				cout<<"LexicalError,";
+			}
+			else
+			{
+				int num=0;
+				for(int k=0;k<len;k++)
+				{
+					num=num+pow(10.0,len-k-1)*int(temp[k]-48);
+				}
+				cout<<"<2,"<<num<<">,";
+			}
+		}
+		else if(Str[i]=='<'&&Str[i+1]=='=')
+		{
+			cout<<"<20,->,";i++;i++;
+		}
+		else if(Str[i]=='>'&&Str[i+1]=='=')
+		{
+			cout<<"<22,->,";i++;i++;
+		}
+		else if(Str[i]=='='&&Str[i+1]=='=')
+		{
+			cout<<"<23,->,";i++;i++;
+		}
+		else if(Str[i]=='!'&&Str[i+1]=='=')
+		{
+			cout<<"<24,->,";i++;i++;
+		}
+		else if(Str[i]=='&'&&Str[i+1]=='&')
+		{
+			cout<<"<25,->,";i++;i++;
+		}
+		else if(Str[i]=='|'&&Str[i+1]=='|')
+		{
+			cout<<"<26,->,";i++;i++;
+		}
+		else
+		{
+			cout<<"<"<<CheckSyboml(Str[i],Symbols,SymbolsNum)<<",->,";i++;
+		}
+		delete temp;
+	}
+	cout<<endl;
+}
+
+void LexicalAnalyzer(char *Str,int Len)
+{
+	int begin=0;
+	int line=0;
+	for(int i=0;i<Len;i++)
+	{
+		if(Str[i]=='\n')
+		{
+			line++;
+			Analyzer(Str,begin,i,line);
+			begin=i+1;
+		}
+	}
+	if(error[0]>0)
+	{
+		cout<<"LexicalError(s) on line(s) ";
+		for(int i=0;i<errornum;i++)
+		{
+			cout<<error[i]<<",";
+		}
+	}
+}
+
+int main()
+{
+	char CodeStr[1000];
+	int CodeLen=0;
+	CodeLen=InputCode(CodeStr);
+	PreTreatment(CodeStr,CodeLen);
+	LexicalAnalyzer(CodeStr,CodeLen);
+	return 0;
+}
